@@ -39300,7 +39300,7 @@ async function main() {
     y: 2,
     z: -26
   });
-  camera.position.z = 2;
+  camera.position.z = 1.5;
   animate();
 }
 
@@ -39344,6 +39344,13 @@ function animate() {
 
   controls.update(); //logo.scene.rotation.y += 0.01;
 
+  /*
+    camera.position.z -= 0.12;
+    if (camera.position.z <= 0) {
+      camera.position.z = 20;
+    }
+  */
+
   renderer.render(scene, camera);
   renderer.setPixelRatio(window.devicePixelRatio);
 }
@@ -39386,7 +39393,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49512" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49627" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
