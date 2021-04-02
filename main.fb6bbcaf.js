@@ -39300,15 +39300,7 @@ async function main() {
     y: 2,
     z: -26
   });
-  camera.position.z = 1;
-  /*
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial( { color: 0x0FFF0F } );
-    cube = new THREE.Mesh( geometry, material );
-    console.log("cube", cube)
-    //scene.add( cube );
-  */
-
+  camera.position.z = 2;
   animate();
 }
 
@@ -39394,7 +39386,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49658" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49512" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
