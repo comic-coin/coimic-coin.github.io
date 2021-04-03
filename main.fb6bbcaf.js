@@ -39257,7 +39257,157 @@ var MapControls = function (object, domElement) {
 exports.MapControls = MapControls;
 MapControls.prototype = Object.create(_threeModule.EventDispatcher.prototype);
 MapControls.prototype.constructor = MapControls;
-},{"../../../build/three.module.js":"node_modules/three/build/three.module.js"}],"js/main.js":[function(require,module,exports) {
+},{"../../../build/three.module.js":"node_modules/three/build/three.module.js"}],"node_modules/three/examples/jsm/webxr/ARButton.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ARButton = void 0;
+
+class ARButton {
+  static createButton(renderer, sessionInit = {}) {
+    const button = document.createElement('button');
+
+    function showStartAR()
+    /*device*/
+    {
+      if (sessionInit.domOverlay === undefined) {
+        var overlay = document.createElement('div');
+        overlay.style.display = 'none';
+        document.body.appendChild(overlay);
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', 38);
+        svg.setAttribute('height', 38);
+        svg.style.position = 'absolute';
+        svg.style.right = '20px';
+        svg.style.top = '20px';
+        svg.addEventListener('click', function () {
+          currentSession.end();
+        });
+        overlay.appendChild(svg);
+        var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M 12,12 L 28,28 M 28,12 12,28');
+        path.setAttribute('stroke', '#fff');
+        path.setAttribute('stroke-width', 2);
+        svg.appendChild(path);
+
+        if (sessionInit.optionalFeatures === undefined) {
+          sessionInit.optionalFeatures = [];
+        }
+
+        sessionInit.optionalFeatures.push('dom-overlay');
+        sessionInit.domOverlay = {
+          root: overlay
+        };
+      } //
+
+
+      let currentSession = null;
+
+      async function onSessionStarted(session) {
+        session.addEventListener('end', onSessionEnded);
+        renderer.xr.setReferenceSpaceType('local');
+        await renderer.xr.setSession(session);
+        button.textContent = 'STOP AR';
+        sessionInit.domOverlay.root.style.display = '';
+        currentSession = session;
+      }
+
+      function onSessionEnded()
+      /*event*/
+      {
+        currentSession.removeEventListener('end', onSessionEnded);
+        button.textContent = 'START AR';
+        sessionInit.domOverlay.root.style.display = 'none';
+        currentSession = null;
+      } //
+
+
+      button.style.display = '';
+      button.style.cursor = 'pointer';
+      button.style.left = 'calc(50% - 50px)';
+      button.style.width = '100px';
+      button.textContent = 'START AR';
+
+      button.onmouseenter = function () {
+        button.style.opacity = '1.0';
+      };
+
+      button.onmouseleave = function () {
+        button.style.opacity = '0.5';
+      };
+
+      button.onclick = function () {
+        if (currentSession === null) {
+          navigator.xr.requestSession('immersive-ar', sessionInit).then(onSessionStarted);
+        } else {
+          currentSession.end();
+        }
+      };
+    }
+
+    function disableButton() {
+      button.style.display = '';
+      button.style.cursor = 'auto';
+      button.style.left = 'calc(50% - 75px)';
+      button.style.width = '150px';
+      button.onmouseenter = null;
+      button.onmouseleave = null;
+      button.onclick = null;
+    }
+
+    function showARNotSupported() {
+      disableButton();
+      button.textContent = 'AR NOT SUPPORTED';
+    }
+
+    function stylizeElement(element) {
+      element.style.position = 'absolute';
+      element.style.bottom = '20px';
+      element.style.padding = '12px 6px';
+      element.style.border = '1px solid #fff';
+      element.style.borderRadius = '4px';
+      element.style.background = 'rgba(0,0,0,0.1)';
+      element.style.color = '#fff';
+      element.style.font = 'normal 13px sans-serif';
+      element.style.textAlign = 'center';
+      element.style.opacity = '0.5';
+      element.style.outline = 'none';
+      element.style.zIndex = '999';
+    }
+
+    if ('xr' in navigator) {
+      button.id = 'ARButton';
+      button.style.display = 'none';
+      stylizeElement(button);
+      navigator.xr.isSessionSupported('immersive-ar').then(function (supported) {
+        supported ? showStartAR() : showARNotSupported();
+      }).catch(showARNotSupported);
+      return button;
+    } else {
+      const message = document.createElement('a');
+
+      if (window.isSecureContext === false) {
+        message.href = document.location.href.replace(/^http:/, 'https:');
+        message.innerHTML = 'WEBXR NEEDS HTTPS'; // TODO Improve message
+      } else {
+        message.href = 'https://immersiveweb.dev/';
+        message.innerHTML = 'WEBXR NOT AVAILABLE';
+      }
+
+      message.style.left = 'calc(50% - 90px)';
+      message.style.width = '180px';
+      message.style.textDecoration = 'none';
+      stylizeElement(message);
+      return message;
+    }
+  }
+
+}
+
+exports.ARButton = ARButton;
+},{}],"js/main.js":[function(require,module,exports) {
 "use strict";
 
 var THREE = _interopRequireWildcard(require("three/build/three.module.js"));
@@ -39265,6 +39415,8 @@ var THREE = _interopRequireWildcard(require("three/build/three.module.js"));
 var _GLTFLoader = require("three/examples/jsm/loaders/GLTFLoader.js");
 
 var _OrbitControls = require("three/examples/jsm/controls/OrbitControls.js");
+
+var _ARButton = require("three/examples/jsm/webxr/ARButton.js");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -39276,32 +39428,85 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 // import * as THREE from 'three/build/three.module.js';
 let scene, camera, renderer, cube;
 let logo, controls;
+const OCCLUSION_LAYER = 1;
 
 async function main() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //fog();
+
   renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
   controls = new _OrbitControls.OrbitControls(camera, renderer.domElement);
   await addLogo();
-  addLight(0xffffff, 1, {
+  addCone();
+  addBox();
+  lightSphere();
+  addDirectionalLight(0xffffff, 1, {
     x: -1,
     y: 2,
     z: 26
   });
-  addLight(0xffffff, 1, {
-    x: -1,
-    y: 2,
-    z: -26
+  addDirectionalLight(0x00ff00, 1, {
+    x: 0,
+    y: -2,
+    z: -3
   });
-  addLight(0xffffff, 1, {
-    x: -21,
-    y: 2,
-    z: -26
-  });
-  camera.position.z = 1.5;
+  addDirectionalLight(0x00ffff, 1, {
+    x: 0,
+    y: -2,
+    z: -3
+  }); //addDirectionalLight(0xffffff, 1, { x: -1, y: 2, z: 26});
+
+  addDirectionalLight(0xff0000, 1, {
+    x: 0,
+    y: -2,
+    z: -3
+  }); //addPointLight(0xff0000, {z: 0})
+
+  camera.position.z = 1;
+  arbutton();
   animate();
+}
+
+function addBox() {
+  const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+  const material = new THREE.MeshPhongMaterial({
+    color: 0xc0c0c0
+  });
+  const cube = new THREE.Mesh(geometry, material);
+  cube.position.set(0, -1.5, -3);
+  scene.add(cube);
+}
+
+function addCone() {
+  const geometry = new THREE.CylinderGeometry(0.8, 0, 2.5, 64); //.rotateX( Math.PI / 2 );
+
+  const material = new THREE.MeshPhongMaterial({
+    color: 0xffffff
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(0, -0.1, -3); //.applyMatrix4( controller.matrixWorld );
+
+  mesh.rotation.set(0, 0, 0);
+  material.transparent = true;
+  material.opacity = 0.1;
+  scene.add(mesh);
+}
+
+function lightSphere() {
+  const geometry = new THREE.SphereBufferGeometry(1, 16, 16);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xffffff
+  });
+  lightSphere = new THREE.Mesh(geometry, material);
+  lightSphere.layers.set(OCCLUSION_LAYER);
+  scene.add(lightSphere);
+}
+
+function arbutton() {
+  document.body.appendChild(_ARButton.ARButton.createButton(renderer));
+  renderer.xr.enabled = true;
 }
 
 async function addLogo() {
@@ -39311,8 +39516,8 @@ async function addLogo() {
     logo = data.scene.children[0]; //.children[0];
 
     logo.position.x = 0;
-    logo.position.y = 0;
-    logo.position.z = 0;
+    logo.position.y = 0.5;
+    logo.position.z = -3;
     logo.material = new THREE.MeshPhongMaterial({
       color: 0x49ef4,
       shininess: 140,
@@ -39324,7 +39529,7 @@ async function addLogo() {
   }
 }
 
-function addLight(color, intensity, position) {
+function addDirectionalLight(color, intensity, position) {
   const light = new THREE.DirectionalLight(color, intensity);
 
   if (position) {
@@ -39334,24 +39539,20 @@ function addLight(color, intensity, position) {
     light.position.set(x, y, z);
   }
 
+  light.target = logo;
   scene.add(light);
 }
 
 function animate() {
-  requestAnimationFrame(animate);
-  logo.rotation.x += 0.01;
+  requestAnimationFrame(animate); //logo.rotation.x += 0.01;
+
   logo.rotation.z += 0.01; // logo.rotation.y += 0.05;
 
   controls.update(); //logo.scene.rotation.y += 0.01;
 
-  /*
-    camera.position.z -= 0.12;
-    if (camera.position.z <= 0) {
-      camera.position.z = 20;
-    }
-  */
-
-  renderer.render(scene, camera);
+  renderer.setAnimationLoop(() => {
+    renderer.render(scene, camera);
+  });
   renderer.setPixelRatio(window.devicePixelRatio);
 }
 
@@ -39365,7 +39566,7 @@ function getLogo() {
 }
 
 window.onload = main;
-},{"three/build/three.module.js":"node_modules/three/build/three.module.js","three/examples/jsm/loaders/GLTFLoader.js":"node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/controls/OrbitControls.js":"node_modules/three/examples/jsm/controls/OrbitControls.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"three/build/three.module.js":"node_modules/three/build/three.module.js","three/examples/jsm/loaders/GLTFLoader.js":"node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/controls/OrbitControls.js":"node_modules/three/examples/jsm/controls/OrbitControls.js","three/examples/jsm/webxr/ARButton.js":"node_modules/three/examples/jsm/webxr/ARButton.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -39393,7 +39594,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49627" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50487" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
